@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
         val bt_login = findViewById(R.id.bt_login) as Button
         val usuario = findViewById(R.id.usuario) as EditText
         val senha = findViewById(R.id.senha) as EditText
+        val bt_cadastrar = findViewById(R.id.bt_cadastrar) as Button
 
         bt_login.isEnabled = false
 
@@ -34,6 +35,13 @@ class MainActivity : AppCompatActivity() {
 
 
         }
+
+
+        bt_cadastrar.setOnClickListener{
+            IrParaCadastroUsuario()
+        }
+
+
     }
 
     private fun bt_visible() {
@@ -50,6 +58,11 @@ class MainActivity : AppCompatActivity() {
         val segundaTela = Intent(this, SegundaTela::class.java)
         startActivity(segundaTela)
 
+    }
+
+    private fun IrParaCadastroUsuario() {
+        val cadastroUsuario = Intent(this, CadastroUsuarioActivity::class.java)
+        startActivity(cadastroUsuario)
     }
 
     private fun verifyLogin() {
