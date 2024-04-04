@@ -7,6 +7,11 @@ import android.widget.EditText
 import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
+import java.io.File
+import java.io.FileWriter
+import java.io.PrintWriter
+import java.io.*
 
 class CadastroUsuarioActivity : AppCompatActivity() {
 
@@ -15,27 +20,46 @@ class CadastroUsuarioActivity : AppCompatActivity() {
     private lateinit var confirmarSenhaEditText: EditText
     private lateinit var tipoUsuarioSpinner: Spinner
     private lateinit var cadastrarButton: Button
+    private lateinit var bt_sair: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cadastro_usuario)
 
-        // Inicialize os componentes
         usernameEditText = findViewById(R.id.usernameEditText)
         senhaEditText = findViewById(R.id.senhaEditText)
         confirmarSenhaEditText = findViewById(R.id.confirmarSenhaEditText)
         tipoUsuarioSpinner = findViewById(R.id.tipoUsuarioSpinner)
         cadastrarButton = findViewById(R.id.cadastrarButton)
+        bt_sair = findViewById(R.id.bt_sair)
 
-        // Inicialize o Spinner com as opções de tipo de usuário
+        cadastrarButton.isEnabled = false
+
+        usernameEditText.setOnFocusChangeListener { _, _ -> bt_visible() }
+        senhaEditText.setOnFocusChangeListener { _, _ -> bt_visible() }
+        confirmarSenhaEditText.setOnFocusChangeListener { _, _ -> bt_visible() }
+
+
         val tiposUsuarios = arrayOf("user", "adm", "mkt")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, tiposUsuarios)
         tipoUsuarioSpinner.adapter = adapter
 
-        // Defina um listener para o botão de cadastro
         cadastrarButton.setOnClickListener {
             cadastrarUsuario()
         }
+
+        bt_sair.setOnClickListener {
+            irParaTelaLogin()
+        }
+    }
+
+    private fun bt_visible() {
+        val bt_cadastrar = findViewById(R.id.cadastrarButton) as Button
+        val username = findViewById(R.id.usernameEditText) as EditText
+        val senha = findViewById(R.id.senhaEditText) as EditText
+        val confirmarSenha = findViewById(R.id.confirmarSenhaEditText) as EditText
+
+        bt_cadastrar.isEnabled = username.text.isNotEmpty() && senha.text.isNotEmpty() && confirmarSenha.text.isNotEmpty()
     }
 
     private fun cadastrarUsuario() {
@@ -44,37 +68,55 @@ class CadastroUsuarioActivity : AppCompatActivity() {
         val confirmarSenha = confirmarSenhaEditText.text.toString()
         val tipoUsuario = tipoUsuarioSpinner.selectedItem.toString()
 
-        // Verifique se todos os campos estão preenchidos e as senhas coincidem
         if (username.isNotEmpty() && senha.isNotEmpty() && senha == confirmarSenha) {
-            // Verifique se o usuário já existe (você precisa implementar esta lógica)
             if (usuarioExiste(username)) {
                 exibirDialog("Erro", "O usuário já existe.")
             } else {
-                // Salve as credenciais do novo usuário (você precisa implementar esta lógica)
                 salvarCredenciais(username, senha, tipoUsuario)
-
-                // Exiba uma mensagem de sucesso
                 exibirDialog("Sucesso", "Usuário cadastrado com sucesso.")
 
-                // Redirecione o usuário de volta para a Tela de Login
-                finish()
             }
         } else {
-            // Caso contrário, exiba uma mensagem de erro
             exibirDialog("Erro", "Por favor, preencha todos os campos corretamente.")
         }
     }
 
     private fun usuarioExiste(username: String): Boolean {
-        // Aqui você implementará a lógica para verificar se o usuário já existe
-        // Pode ser verificando em um banco de dados, em um arquivo de persistência local, etc.
-        // Retorne true se o usuário já existir, false caso contrário
+        val arquivoCredenciais = "usuarios.txt"
+
+        val diretorio = filesDir
+        val caminhoArquivo = File(diretorio, arquivoCredenciais)
+
+        if (!caminhoArquivo.exists()) {
+            return false
+        }
+
+        BufferedReader(FileReader(caminhoArquivo)).use { reader ->
+            var linha: String?
+            while (reader.readLine().also { linha = it } != null) {
+                val dados = linha!!.split(":")
+                val usuarioArquivo = dados[0]
+
+                if (usuarioArquivo == username) {
+                    return true
+                }
+            }
+        }
         return false
     }
 
     private fun salvarCredenciais(username: String, senha: String, tipoUsuario: String) {
-        // Aqui você implementará a lógica para salvar as credenciais do novo usuário
-        // Isso pode envolver escrever em um arquivo de preferências compartilhadas, em um banco de dados local, etc.
+        val dadosUsuario = "$username:$senha:$tipoUsuario"
+
+        val diretorio = filesDir
+
+        val nomeArquivo = "usuarios.txt"
+
+        val caminhoArquivo = File(diretorio, nomeArquivo)
+
+        PrintWriter(FileWriter(caminhoArquivo, true)).use { out ->
+            out.println(dadosUsuario)
+        }
     }
 
     private fun exibirDialog(titulo: String, mensagem: String) {
@@ -82,6 +124,16 @@ class CadastroUsuarioActivity : AppCompatActivity() {
         alertDialog.setTitle(titulo)
         alertDialog.setMessage(mensagem)
         alertDialog.setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+        alertDialog.setOnDismissListener {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
         alertDialog.show()
+    }
+
+    private fun irParaTelaLogin() {
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
     }
 }

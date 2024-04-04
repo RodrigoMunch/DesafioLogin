@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
-import com.example.desafiologin.AppGlobals
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileReader
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,7 +33,9 @@ class MainActivity : AppCompatActivity() {
 
 
         bt_login.setOnClickListener{
-            verifyLogin()
+            bt_login.setOnClickListener{
+                verifyLogin(usuario.text.toString(), senha.text.toString())
+            }
 
 
         }
@@ -65,16 +69,37 @@ class MainActivity : AppCompatActivity() {
         startActivity(cadastroUsuario)
     }
 
-    private fun verifyLogin() {
-        val usuario = findViewById(R.id.usuario) as EditText
-        val senha = findViewById(R.id.senha) as EditText
+    private fun verifyLogin(username: String, senha: String) {
+        val arquivoCredenciais = "usuarios.txt"
 
-        if (usuario.text.toString() == AppGlobals.usuarioPadrao && senha.text.toString() == AppGlobals.senhaPadrao) {
+        if (realizarLogin(arquivoCredenciais, username, senha)) {
             IrParaSegundaTela()
         } else {
             showAlertDialog()
-
         }
+    }
+
+    private fun realizarLogin(arquivo: String, username: String, senha: String): Boolean {
+        val diretorio = filesDir
+        val caminhoArquivo = File(diretorio, arquivo)
+
+        if (!caminhoArquivo.exists()) {
+            return false
+        }
+
+        BufferedReader(FileReader(caminhoArquivo)).use { reader ->
+            var linha: String?
+            while (reader.readLine().also { linha = it } != null) {
+                val dados = linha!!.split(":")
+                val usuarioArquivo = dados[0]
+                val senhaArquivo = dados[1]
+                
+                if (usuarioArquivo == username && senhaArquivo == senha) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     private fun showAlertDialog() {
@@ -84,6 +109,4 @@ class MainActivity : AppCompatActivity() {
         alerta.setPositiveButton("OK", null)
         alerta.show()
     }
-
-
 }
